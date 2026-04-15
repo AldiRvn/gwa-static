@@ -27,6 +27,7 @@ go.work.sum
 # env file
 .env
 
-gen/qr.png
 main.log
 wa.db
+gen/qr.png
+data/

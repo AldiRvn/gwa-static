@@ -15,7 +15,7 @@ func init() {
 	appPort := "8081"
 
 	Logger = logdy.InitializeLogdy(logdy.Config{
-		ServerIp:   "127.0.0.1",
+		ServerIp:   "0.0.0.0",
 		ServerPort: appPort,
 		LogInterceptor: func(entry *utils.LogEntry) {
 			slog.Info("logdy access notif:", "time", entry.Time.Format(time.DateTime), "message", entry.Message)
