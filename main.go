@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +14,7 @@ import (
 	_ "time/tzdata"
 
 	"gwa-static/config"
+	"gwa-static/util"
 
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/logdyhq/logdy-core/logdy"
@@ -115,8 +117,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	clientLog := waLog.Stdout("Client", "DEBUG", true)
-	client = whatsmeow.NewClient(deviceStore, clientLog)
+
+	// clientLog := waLog.Stdout("Client", "DEBUG", true)
+	// client = whatsmeow.NewClient(deviceStore, clientLog) //? default logger
+
+	logger := util.NewLogger("http://0.0.0.0:3100", "gwa-static", slog.LevelDebug)
+	client = whatsmeow.NewClient(deviceStore, logger) //? custom logger
+	logger.Infof("Running App.")
+
 	client.AddEventHandler(eventHandler)
 
 	if client.Store.ID == nil {
