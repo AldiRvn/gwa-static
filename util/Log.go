@@ -35,8 +35,7 @@ func (l *Logger) sendToLoki(level slog.Leveler, msg string, args ...any) {
 	client := resty.New()
 	defer client.Close()
 
-	res, err := client.R().
-		EnableTrace().SetBody(
+	res, err := client.R().SetBody(
 		map[string]any{
 			"streams": []map[string]any{
 				{

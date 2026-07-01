@@ -7,6 +7,7 @@ import (
 
 const (
 	GENERATED_FOLDER = "./gen"
+	DB_FOLDER        = "./db"
 )
 
 func init() {

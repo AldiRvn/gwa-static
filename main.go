@@ -27,6 +27,8 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"google.golang.org/protobuf/proto"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 var client *whatsmeow.Client
@@ -108,7 +110,7 @@ func main() {
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	ctx := context.Background()
 	container, err := sqlstore.New(ctx,
-		"sqlite", config.GENERATED_FOLDER+"/wa.db?_pragma=foreign_keys(1)", dbLog)
+		"sqlite", config.DB_FOLDER+"/wa.db?_pragma=foreign_keys(1)", dbLog)
 	if err != nil {
 		panic(err)
 	}
@@ -118,11 +120,12 @@ func main() {
 		panic(err)
 	}
 
-	// clientLog := waLog.Stdout("Client", "DEBUG", true)
-	// client = whatsmeow.NewClient(deviceStore, clientLog) //? default logger
+	clientLog := waLog.Stdout("Client", "DEBUG", true)
+	client = whatsmeow.NewClient(deviceStore, clientLog) //? default logger
 
 	logger := util.NewLogger("http://0.0.0.0:3100", "gwa-static", slog.LevelDebug)
-	client = whatsmeow.NewClient(deviceStore, logger) //? custom logger
+	client = whatsmeow.NewClient(deviceStore, clientLog) //? default logger
+	// client = whatsmeow.NewClient(deviceStore, logger) //? custom logger
 	logger.Infof("Running App.")
 
 	client.AddEventHandler(eventHandler)
@@ -135,8 +138,24 @@ func main() {
 		}
 		for evt := range qrChan {
 			if evt.Event == "code" {
+				if pairPhoneTarget := os.Getenv("PAIR_PHONE_NUM"); pairPhoneTarget != "" {
+					code, err := client.PairPhone(
+						ctx,
+						pairPhoneTarget,
+						true,
+						whatsmeow.PairClientChrome,
+						"Chrome (Linux)",
+					)
+					if err != nil {
+						log.Println("PairPhone err:", aurora.Red(err))
+					}
+					log.Printf("PairPhone code: %q\n", aurora.Green(code))
+				} else {
+					slog.Warn("Pair Phone Target empty")
+				}
+
 				fmt.Println("QR code:", aurora.Green(evt.Code))
-				err := qrcode.WriteFile(evt.Code, qrcode.Medium, 256, config.GENERATED_FOLDER+"/qr.png")
+				err = qrcode.WriteFile(evt.Code, qrcode.Medium, 256, config.GENERATED_FOLDER+"/qr.png")
 				if err != nil {
 					panic(err)
 				}
