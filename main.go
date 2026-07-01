@@ -88,7 +88,7 @@ func eventHandler(evt interface{}) {
 
 		client.MarkRead(ctx, []types.MessageID{msg.Info.ID}, time.Now(), msg.Info.Sender, msg.Info.Sender)
 		client.SendChatPresence(ctx, msg.Info.Sender, types.ChatPresenceComposing, types.ChatPresenceMediaText)
-		client.SendMessage(ctx, msg.Info.Chat, reply)
+		// client.SendMessage(ctx, msg.Info.Chat, reply)
 		client.SendChatPresence(ctx, msg.Info.Sender, types.ChatPresencePaused, types.ChatPresenceMediaText)
 
 		config.Logger.Log(logdy.Fields{
@@ -136,22 +136,26 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		var pairCode string
 		for evt := range qrChan {
 			if evt.Event == "code" {
-				if pairPhoneTarget := os.Getenv("PAIR_PHONE_NUM"); pairPhoneTarget != "" {
-					code, err := client.PairPhone(
-						ctx,
-						pairPhoneTarget,
-						true,
-						whatsmeow.PairClientChrome,
-						"Chrome (Linux)",
-					)
-					if err != nil {
-						log.Println("PairPhone err:", aurora.Red(err))
+				if pairCode == "" {
+					if pairPhoneTarget := os.Getenv("PAIR_PHONE_NUM"); pairPhoneTarget != "" {
+						pairCode, err = client.PairPhone(
+							ctx,
+							pairPhoneTarget,
+							true,
+							whatsmeow.PairClientChrome,
+							"Chrome (Linux)",
+						)
+						if err != nil {
+							log.Println("PairPhone err:", aurora.Red(err))
+						}
+						log.Printf("Pair Phone code: %q\n", aurora.Green(pairCode))
+					} else {
+						slog.Warn("Pair Phone Target empty")
 					}
-					log.Printf("PairPhone code: %q\n", aurora.Green(code))
-				} else {
-					slog.Warn("Pair Phone Target empty")
 				}
 
 				fmt.Println("QR code:", aurora.Green(evt.Code))
